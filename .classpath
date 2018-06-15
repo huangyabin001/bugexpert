@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="lib" path="lib/ddmlib-26.0.0-dev.jar"/>
+	<classpathentry kind="lib" path="lib/annotations-26.0.0-dev.jar"/>
+	<classpathentry kind="lib" path="lib/common-26.0.0-dev.jar"/>
+	<classpathentry kind="lib" path="lib/guava-22.0.jar"/>
+	<classpathentry kind="lib" path="lib/kxml2-2.3.0.jar"/>
+	<classpathentry kind="lib" path="lib/monkeyrunner-26.0.0-dev.jar"/>
+	<classpathentry kind="lib" path="lib/screenshot2-26.0.0-dev.jar"/>
+	<classpathentry kind="lib" path="lib/sdk-common-26.0.0-dev.jar"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>
