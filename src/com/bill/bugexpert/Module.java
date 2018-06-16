@@ -512,6 +512,7 @@ public abstract class Module implements ChapterParent {
 	 * representation of the report, and then renders the output html files.
 	 */
 	public final void generate() throws IOException {
+		logI("Module:generatie(); Generating...");
 		// Make sure it has a name
 		mDoc.setFileName(mFileName.get());
 
@@ -647,14 +648,11 @@ public abstract class Module implements ChapterParent {
 	}
 
 	private void copyRes(String fni, String fno) throws IOException {
-		logD("if package to a jar,the path should start with '/res',or else start with 'res'.");
-		File fT=new File(fni);
-		if(!fT.exists()) {
-			logI(fni+ "is not exist!");
-			System.exit(0);
-		}else {
-            logI(fni+ "is exist!");
+		File fniSwitch = new File(fni);
+		if (!fniSwitch.exists()) {
+			logD(fni + "is not exist!");
 		}
+
 		InputStream is = Resources.class.getResourceAsStream(fni);
 
 		if (is == null) {

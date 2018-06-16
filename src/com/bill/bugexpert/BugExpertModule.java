@@ -1,23 +1,3 @@
-/*
- * Copyright (C) 2011 Sony Ericsson Mobile Communications AB
- * Copyright (C) 2012-2013 Sony Mobile Communications AB
- * Copyright (C) 2016 Tuenti Technologies
- *
- * This file is part of ChkBugReport.
- *
- * ChkBugReport is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 2 of the License, or
- * (at your option) any later version.
- *
- * ChkBugReport is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with ChkBugReport.  If not, see <http://www.gnu.org/licenses/>.
- */
 package com.bill.bugexpert;
 
 import java.io.BufferedInputStream;
@@ -68,6 +48,7 @@ import com.bill.bugexpert.ps.PSRecord;
 import com.bill.bugexpert.ps.PSRecords;
 import com.bill.bugexpert.ps.PSScanner;
 import com.bill.bugexpert.util.LineReader;
+import com.bill.bugexpert.util.RegExpUtil;
 import com.bill.bugexpert.util.Util;
 
 /**
@@ -75,6 +56,11 @@ import com.bill.bugexpert.util.Util;
  * files, a dummy bugreport is created.
  */
 public class BugExpertModule extends Module {
+
+	private static final boolean FORMAT_STRIC_MODE = true;
+
+	private static final String CUTTING_LINE = "========================================================";
+	private static boolean cuttine_line_flag = true;
 
 	private static final String SECTION_DIVIDER = "-------------------------------------------------------------------------------";
 
@@ -161,33 +147,44 @@ public class BugExpertModule extends Module {
 		return mTimestamp;
 	}
 
+	/* before load bugreport file set the default format mode(FORMAT_STRIC_MODE). */
 	private boolean load(InputStream is) throws IOException {
 		logD("The second arg's defalut value is false, change false to true here,just for debug!!!");
-		return load(is, true, null);
+		return load(is, FORMAT_STRIC_MODE, null);
 	}
 
-	private boolean load(InputStream is, boolean partial, String secName) throws IOException {
+	/* load bugreport file and parse it. */
+	private boolean load(InputStream is, boolean mode, String secName) throws IOException {
+		logI("BugExpertModule:load(),Loading bugreport file.");
+
 		long t0 = System.currentTimeMillis();
-		logD("Loading input...");
 		LineReader br = new LineReader(is);
 		String buff;
 		Section curSection = null;
 		mTimestamp = null;
 		int lineNr = 0;
 		int skipCount = 5;
-		boolean formatOk = partial;
+		boolean formatOk = false;
+
+		logD("##########\n\n");
+		logI("Check whether is a well-formed bugreport file.");
 		while (null != (buff = br.readLine())) {
-			if (!formatOk) {
-				// Sill need file format validation
-				// Check if this is a dropbox file
+			if (mode) {
+
 				if (0 == lineNr && buff.startsWith("Process: ")) {
+					logI("Check whether is a well-formed dropbox file.");
 					return loadFromDopBox(br, buff);
 				}
 
 				if (0 == lineNr) {
-					logD("Not detected yet");
-					if (buff.startsWith("==============")) {
-						logD("Ok, pass through and start processing");
+					logI("Not detected yet");
+					if (buff.equals(CUTTING_LINE)) {
+						if (cuttine_line_flag) {
+							cuttine_line_flag = false;
+						} else {
+							cuttine_line_flag = true;
+						}
+						logI("It's a cutting line,cuttine_line_flag is " + cuttine_line_flag);
 					} else {
 						if (0 == --skipCount) {
 							// give up (simply pass through and let if fail later)
@@ -198,25 +195,31 @@ public class BugExpertModule extends Module {
 					}
 				}
 
-				// Verify file format (just a simple sanity check)
+				/****** Step1. Verify file is a well-formated bugreport,begin. ******/
 				lineNr++;
 
-				if (1 == lineNr && !buff.startsWith("==============")) {
-					logD("==============");
+				if (1 == lineNr && !buff.equals(CUTTING_LINE)) {
+					logI("linenr is 1,line is " + buff);
 					break;
 				}
-				if (2 == lineNr && !buff.startsWith("== dumpstate")) {
-					logD("dumpstate");
+				if (2 == lineNr && !RegExpUtil.isMatch(RegExpUtil.DUMPSTATE_PATTERN, buff)) {
+					logI("lineNr is 2,line isn " + buff);
 					break;
 				}
-				if (3 == lineNr && !buff.startsWith("==============")) {
-					logD("==============");
+				if (3 == lineNr && !buff.equals(CUTTING_LINE)) {
+					logI("linenr is 3,line is " + buff);
+					if (cuttine_line_flag) {
+						cuttine_line_flag = false;
+					} else {
+						cuttine_line_flag = true;
+					}
 					break;
 				}
 				if (4 == lineNr) {
-					logD("formatOk is true");
+					logI("formatOk is true");
 					formatOk = true;
 				}
+				/****** Step1. Verify file is a well-formated bugreport, end. ******/
 
 				// Extract timestamp of crash
 				Calendar ts = Util.parseTimestamp(this, buff);
@@ -225,29 +228,32 @@ public class BugExpertModule extends Module {
 				}
 			}
 
-			// Parse sections and sub-sections
-			if (buff.startsWith("------ ")) {
-				// build up file name
-				int e = buff.indexOf(" ------");
-				if (e >= 0) {
-					String sectionName = buff.substring(7, e);
+			/****** Step2. Parse out sections and sub-sections, begin. ******/
+			// logI("Parse out sections and build up file name.");
 
-					// Workaround for SMAP spamming
-					boolean newSection = true;
-					if (curSection != null && curSection.getName().equals("SMAPS OF ALL PROCESSES")) {
-						if (sectionName.startsWith("SHOW MAP ")) {
-							newSection = false;
-						}
-					}
-					if (newSection) {
-						Section section = new Section(this, sectionName);
-						addSection(section);
-						curSection = section;
-						continue;
-					}
+			if (RegExpUtil.isMatch(RegExpUtil.SECTION_PATTERN, buff)
+					&& !RegExpUtil.isMatch(RegExpUtil.SECTION_DURATION_PATTERN, buff)) {
+				String sectionName = buff.substring(7, buff.indexOf(" ------"));
+
+				logI("sectionName is " + sectionName + ".");
+				// Workaround for SMAP spamming
+				boolean newSection = true;
+				if (curSection != null && curSection.getName().equals("SMAPS OF ALL PROCESSES")) {
+
+					// don't add "SHOW MAP" as a section.
+					newSection = sectionFilter(RegExpUtil.SHOW_MAP, buff);
+
+				}
+
+				if (newSection) {
+					Section section = new Section(this, sectionName);
+					addSection(section);
+					curSection = section;
+					continue;
 				}
 			}
 
+			/****** Step2.1. Parse out service as a sections, begin. ******/
 			// Workaround for buggy wallpaper service dump
 			int idx = buff.indexOf(SECTION_DIVIDER);
 			if (idx > 0) {
@@ -274,11 +280,13 @@ public class BugExpertModule extends Module {
 				}
 				continue;
 			}
+			/****** Step2.1. Parse out service as a sections, end. ******/
 
+			/****** Step2.2. Parse out header as a sections, begin. ******/
 			// Add the current line to the current section
-			if (curSection == null && partial) {
+			if (curSection == null && !mode) {
 				// We better not spam the header section, so let's create a fake section
-				if(secName == null) {
+				if (secName == null) {
 					logE("secName is NULL!");
 					continue;
 				}
@@ -291,16 +299,30 @@ public class BugExpertModule extends Module {
 				addHeaderLine(buff);
 				mBugReportHeader.add(buff);
 			}
+			/****** Step2.2. Parse out header as a sections, end. ******/
+
+			/****** Step2. Parse out sections and sub-sections, end. ******/
 		}
 
 		br.close();
 
 		long t1 = System.currentTimeMillis();
-		logD( String.format("Loaded in %.2f seconds.", (t1 - t0) / 1000.0f));
+		logI(String.format("Loaded in %.2f seconds.", (t1 - t0) / 1000.0f));
+		logD("##########\n\n");
+
 		if (!formatOk) {
 			throw new IOException("Does not look like a bugreport file!");
 		}
 		return true;
+	}
+
+	/* filter out some invalid sections and specific sections. */
+	private boolean sectionFilter(String pattern, String str) {
+		if (RegExpUtil.isMatch(pattern, str)) {
+			return false;
+		} else {
+			return true;
+		}
 	}
 
 	/**
@@ -610,14 +632,16 @@ public class BugExpertModule extends Module {
 	}
 
 	private boolean autodetectFile(String fileName, boolean limitSize) {
+		logI("BugExpertModule:autodetectFile(), fileName is " + fileName);
 		File f = new File(fileName);
 		if (!f.exists()) {
 			logE("File " + fileName + " does not exists!");
 		}
 
 		// Try to open it as zip
+		ZipFile zip = null;
 		try {
-			ZipFile zip = new ZipFile(fileName);
+			zip = new ZipFile(fileName);
 			Enumeration<? extends ZipEntry> entries = zip.entries();
 			while (entries.hasMoreElements()) {
 				ZipEntry entry = entries.nextElement();
@@ -629,10 +653,20 @@ public class BugExpertModule extends Module {
 					autodetectFile(fileName + ":" + entry.getName(), zip.getInputStream(entry));
 				}
 			}
+			zip.close();
 			// We managed to process as zip file, so do not handle as non-zip file
 			return true;
 		} catch (IOException e) {
 			// Failed, so let's just work with the raw file
+		} finally {
+			try {
+				if (zip != null) {
+					zip.close();
+					logE("zip is closed,finally.");
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 		}
 
 		// Failed to process as zip file, so try processing as normal file
@@ -685,16 +719,15 @@ public class BugExpertModule extends Module {
 			throw new IllegalParameterException("Cannot detect the type of file: " + fileName);
 		}
 
-		// Load the file and generate the report
+		logI("Load the file and generate the report.");
 		if (type.get().equals(TYPE_BUGREPORT)) {
 			try {
-				System.out.println("test0");
+				logI("BugExpertModeule:load(is)");
 				load(is);
-				System.out.println("test");
+				logI("BugExpertModeule:setSource(), fileName is " + fileName + "TYPE_BUGREPORT is " + TYPE_BUGREPORT
+						+ ".");
 				setSource(new SourceFile(fileName, TYPE_BUGREPORT));
-				System.out.println("test1");
 				setFileName(fileName, 100);
-				System.out.println("test2");
 			} catch (IOException e) {
 				e.printStackTrace();
 				throw new IllegalParameterException("Not a bugreport file");
