@@ -164,7 +164,7 @@ import com.bill.bugexpert.util.Util;
                 List list = new List(List.TYPE_UNORDERED, stu);
                 for (int i = 0; i < cnt; i++) {
                     PSRecord psr = p.getUnknownThread(i);
-                    new DocNode(list).add(psr.getName() + "(" + psr.getPid() + ")");
+                    new DocNode(list).add(psr.getCmd() + "(" + psr.getPid() + ")");
                 }
             }
         }

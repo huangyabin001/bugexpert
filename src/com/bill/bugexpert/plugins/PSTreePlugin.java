@@ -43,7 +43,7 @@ public class PSTreePlugin extends Plugin {
 
     @Override
     public void load(Module br) {
-        // NOP
+    	mMod.logD("PSTreePlugin:load(),none...");
     }
 
     @Override

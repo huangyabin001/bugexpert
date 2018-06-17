@@ -54,7 +54,7 @@ public class ChartEditorPlugin extends Plugin {
 
     @Override
     public void load(Module mod) {
-        // NOP
+    	mMod.logD("ChartEditorPlugin:load(),none...");
     }
 
     @Override

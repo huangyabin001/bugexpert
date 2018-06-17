@@ -64,7 +64,7 @@ public class FTracePlugin extends Plugin {
 
     @Override
     public void load(Module br) {
-        // NOP
+    	mMod.logD("FTracePlugin:load(),none...");
     }
 
     @Override

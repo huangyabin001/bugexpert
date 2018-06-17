@@ -50,6 +50,7 @@ public class KernelLogPlugin extends Plugin {
 
     @Override
     public void load(Module rep) {
+    	mMod.logD("KernelLogPlugin:load(),loading...");
         BugExpertModule br = (BugExpertModule)rep;
 
         loadLog(br, Section.KERNEL_LOG, "Kernel log", "kernellog", INFO_ID_KERNEL_LOG);

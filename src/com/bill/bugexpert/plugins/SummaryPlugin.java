@@ -37,6 +37,7 @@ public class SummaryPlugin extends Plugin {
 
     @Override
     public void load(Module br) {
+    	mMod.logD("SummaryPlugin:load(),none...");
         // NOP: do all the work in generate, when all other plugins have finished
     }
 

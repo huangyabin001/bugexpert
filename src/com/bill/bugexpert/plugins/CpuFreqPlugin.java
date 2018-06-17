@@ -46,6 +46,7 @@ public class CpuFreqPlugin extends Plugin {
 
     @Override
     public void load(Module mod) {
+    	mMod.logD("CpuFreqPlugin:load(),loading...");
         Section sec = mod.findSection(Section.KERNEL_CPUFREQ);
         if (sec == null) {
             mod.logE(TAG + "Section not found: " + Section.KERNEL_CPUFREQ + " (aborting plugin)");

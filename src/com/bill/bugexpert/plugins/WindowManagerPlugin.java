@@ -71,6 +71,7 @@ public class WindowManagerPlugin extends Plugin {
 
     @Override
     public void load(Module br) {
+    	mMod.logD("WindowManagerPlugin:load(),loading...");
         // Load data
         mSection = br.findSection(Section.DUMP_OF_SERVICE_WINDOW);
         if (mSection == null) {

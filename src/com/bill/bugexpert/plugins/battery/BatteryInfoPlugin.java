@@ -132,7 +132,7 @@ public class BatteryInfoPlugin extends Plugin {
 
     @Override
     public void load(Module mod) {
-        // NOP
+    	mMod.logD("BatteryInfoPlugin:load(),none...");
     }
 
     @Override

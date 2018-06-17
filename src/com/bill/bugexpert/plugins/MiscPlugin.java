@@ -43,7 +43,7 @@ public class MiscPlugin extends Plugin {
 
     @Override
     public void load(Module mod) {
-        // NOP
+    	mMod.logD("MiscPlugin:load(),none...");
     }
 
     @Override

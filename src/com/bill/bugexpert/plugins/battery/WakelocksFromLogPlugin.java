@@ -59,6 +59,7 @@ public class WakelocksFromLogPlugin extends Plugin {
 
     @Override
     public void load(Module br) {
+    	mMod.logD("WakelocksFromLogPlugin:load(),loading...");
         LogLines logs = (LogLines) br.getInfo(SystemLogPlugin.INFO_ID_SYSTEMLOG);
         if (logs == null || logs.isEmpty()) {
             // System log missing

@@ -66,6 +66,7 @@ public class WakelocksPlugin extends Plugin {
 
     @Override
     public void load(Module br) {
+    	mMod.logD("WakeLocksPlugin:load(),load...");
         Section section = br.findSection(Section.KERNEL_WAKELOCKS);
         if (section == null) {
             br.logE(TAG + "Section not found: " + Section.KERNEL_WAKELOCKS + " (aborting plugin)");

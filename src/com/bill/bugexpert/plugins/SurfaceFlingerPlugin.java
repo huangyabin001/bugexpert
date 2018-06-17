@@ -106,6 +106,7 @@ public class SurfaceFlingerPlugin extends Plugin {
 
     @Override
     public void load(Module rep) {
+    	mMod.logD("SurfaceFlinger:load(),loading...");
         BugExpertModule br = (BugExpertModule)rep;
 
         // Load data

@@ -44,6 +44,7 @@ public class AlarmManagerPlugin extends Plugin {
 
     @Override
     public void load(Module br) {
+    	mMod.logD("AlarmManagerPlugin:load(),loading...");
         // Load data
         mSection = br.findSection(Section.DUMP_OF_SERVICE_ALARM);
         if (mSection == null) {

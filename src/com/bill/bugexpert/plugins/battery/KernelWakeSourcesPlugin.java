@@ -64,6 +64,7 @@ public class KernelWakeSourcesPlugin extends Plugin {
 
     @Override
     public void load(Module br) {
+    	mMod.logD("KernelWakeSoucesPlugin:load(),loading...");
         Section section = br.findSection(Section.KERNEL_WAKE_SOURCES);
         if (section == null) {
             br.logE(TAG + "Section not found: " + Section.KERNEL_WAKE_SOURCES + " (aborting plugin)");

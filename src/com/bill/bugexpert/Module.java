@@ -522,7 +522,8 @@ public abstract class Module implements ChapterParent {
 		// Allow sub-classes to pre-process data
 		preProcess();
 
-		// Run all the plugins
+		// 
+		logD("Run all the plugins.");
 		runPlugins();
 
 		// Collect detected bugs

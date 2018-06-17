@@ -55,6 +55,7 @@ public class UsageHistoryPlugin extends Plugin {
 
     @Override
     public void load(Module br) {
+    	mMod.logD("UsageHistoryPlugin:load(),loading...");
         Section s = br.findSection(Section.USAGE_HISTORY);
         if (s == null) {
             br.logE(TAG + "Cannot find section: " + Section.USAGE_HISTORY);

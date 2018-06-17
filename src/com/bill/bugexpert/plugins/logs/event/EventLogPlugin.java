@@ -93,6 +93,7 @@ public class EventLogPlugin extends LogPlugin {
     @Override
     public void load(Module rep) {
         super.load(rep);
+        mMod.logD("EventLogPlugin:load(),loading...");
         mAM.finishLoad();
         mBatteryLevels.setRange(getFirstTs(), getLastTs());
         mSamples = new SampleDatasGenerator(this, mSDs);

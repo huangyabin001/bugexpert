@@ -100,6 +100,7 @@ public class BugExpertModule extends Module {
 
 	@Override
 	protected void loadPlugins() {
+		logI("BugExpertModule:loadPlugins¡£¡£¡£");
 		addPlugin(new MemPlugin());
 		addPlugin(new StackTracePlugin());
 		addPlugin(new SystemLogPlugin());

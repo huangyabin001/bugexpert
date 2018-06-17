@@ -23,6 +23,7 @@ import java.io.IOException;
 
 	@Override
 	public void load(Module mod) {
+		mMod.logD("AdbExtension:load(),none...");
 	}
 
 	@Override

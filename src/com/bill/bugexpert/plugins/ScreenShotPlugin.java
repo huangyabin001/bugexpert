@@ -44,7 +44,7 @@ public class ScreenShotPlugin extends Plugin {
 
     @Override
     public void load(Module br) {
-        // NOP
+    	mMod.logD("ScreenShotPlug:load(),none...");
     }
 
     @Override

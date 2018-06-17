@@ -60,6 +60,7 @@ public class SystemLogPlugin extends LogPlugin {
 
     @Override
     public void load(Module mod) {
+    	mMod.logD("SystemLogPlugin:load(),none...");
         mConnectivityLogs = new ConnectivityLogs();
         super.load(mod);
         if (!mConnectivityLogs.isEmpty()) {
