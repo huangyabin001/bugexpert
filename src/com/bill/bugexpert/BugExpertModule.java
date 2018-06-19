@@ -203,7 +203,7 @@ public class BugExpertModule extends Module {
 					logI("linenr is 1,line is " + buff);
 					break;
 				}
-				if (2 == lineNr && !RegExpUtil.isMatch(RegExpUtil.DUMPSTATE_PATTERN, buff)) {
+				if (2 == lineNr && !RegExpUtil.isMatch(RegExpUtil.DUMPSTATE, buff)) {
 					logI("lineNr is 2,line isn " + buff);
 					break;
 				}
@@ -232,8 +232,8 @@ public class BugExpertModule extends Module {
 			/****** Step2. Parse out sections and sub-sections, begin. ******/
 			// logI("Parse out sections and build up file name.");
 
-			if (RegExpUtil.isMatch(RegExpUtil.SECTION_PATTERN, buff)
-					&& !RegExpUtil.isMatch(RegExpUtil.SECTION_DURATION_PATTERN, buff)) {
+			if (RegExpUtil.isMatch(RegExpUtil.SECTION, buff)
+					&& !RegExpUtil.isMatch(RegExpUtil.SECTION_DURATION, buff)) {
 				String sectionName = buff.substring(7, buff.indexOf(" ------"));
 
 				logI("sectionName is " + sectionName + ".");

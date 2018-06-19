@@ -43,6 +43,7 @@ public class Section extends Lines {
     public static final String USAGE_HISTORY = "USAGE HISTORY";
     public static final String VM_TRACES_AT_LAST_ANR = "VM TRACES AT LAST ANR";
     public static final String VM_TRACES_JUST_NOW = "VM TRACES JUST NOW";
+    public static final String VM_TRACES_WHEN_SLOW = "VM TRACES WHEN SLOW";
     public static final String WINDOW_MANAGER_POLICY_STATE = "WINDOW MANAGER POLICY STATE";
     public static final String WINDOW_MANAGER_SESSIONS = "WINDOW MANAGER SESSIONS";
     public static final String WINDOW_MANAGER_TOKENS = "WINDOW MANAGER TOKENS";

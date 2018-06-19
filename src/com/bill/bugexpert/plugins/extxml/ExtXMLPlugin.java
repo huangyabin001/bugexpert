@@ -55,6 +55,7 @@ public class ExtXMLPlugin extends Plugin {
 
     @Override
     public void hook(Module mod) {
+    	mMod.logD("ExtXMLPlugin:hook(),Installing hook......");
         // Execute the "hook" tag
         for (XMLNode hook : mXml) {
             if (!"hook".equals(hook.getName())) continue;

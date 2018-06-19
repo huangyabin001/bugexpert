@@ -617,7 +617,7 @@ public abstract class Module implements ChapterParent {
 		logD("Plugins are loading data...");
 		for (Plugin p : mPlugins) {
 			if (!mCrashedPlugins.contains(p)) {
-				logD("Running (load) plugin: " + p.getClass().getName() + "...");
+				logD("Loading plugin: " + p.getClass().getName() + "...");
 				try {
 					p.load(this);
 				} catch (Throwable e) {

@@ -38,7 +38,7 @@ public class PSScanner {
 				idxCmd = -1;
 		for (int tries = 0; tries < 10 && lineIdx < ps.getLineCount(); tries++) {
 			String buff = ps.getLine(lineIdx++);
-			if (RegExpUtil.isMatch(RegExpUtil.PROCESSES_THREADS_PATTERN, buff)) {
+			if (RegExpUtil.isMatch(RegExpUtil.PROCESSES_THREADS, buff)) {
 				idxLabel = 1;
 				idxUser = 2;
 				idxPid = 3;
@@ -58,11 +58,11 @@ public class PSScanner {
 			String buff = ps.getLine(i);
 			if (buff.startsWith("["))
 				break;
-			if (RegExpUtil.isMatch(RegExpUtil.SECTION_DURATION_PATTERN, buff)) {
+			if (RegExpUtil.isMatch(RegExpUtil.SECTION_DURATION, buff)) {
 				mBr.logW("parsing line: " + buff + " ,ignoring...");
 				continue;
 			}
-			Matcher m = RegExpUtil.getMatch(RegExpUtil.PROCESSES_THREADS_DATA_PATTERN, buff);
+			Matcher m = RegExpUtil.getMatch(RegExpUtil.PROCESSES_THREADS_DATA, buff);
 			if (m == null) {
 				mBr.logE("Error parsing line: " + buff);
 				continue;
