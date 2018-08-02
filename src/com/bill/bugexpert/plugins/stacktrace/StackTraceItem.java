@@ -21,87 +21,112 @@ package com.bill.bugexpert.plugins.stacktrace;
 
 /* package */ final class StackTraceItem {
 
-    public static final int TYPE_JAVA = 0;
-    public static final int TYPE_NATIVE = 1;
+	public static final int TYPE_JAVA = 0;
+	public static final int TYPE_NATIVE = 1;
 
-    public static final String STYLE_ERR = "stacktrace-err";
-    public static final String STYLE_BUSY = "stacktrace-busy";
+	public static final String STYLE_ERR = "stacktrace-err";
+	public static final String STYLE_BUSY = "stacktrace-busy";
 
-    /** The type of the stack traces: java or native */
-    private int mType;
-    /** Method/function name, if known (for native stack it might be unknown) */
-    private String mMethod;
-    /** Address offset from beginning of method, for native stack traces */
-    private int mMethodOffset;
-    /** The name of the file, if known */
-    private String mFileName;
-    /** The line number inside the file, if known */
-    private int mLine;
-    /** For native stack traces, the pc address */
-    private long mPC; // long, because soon we could have 64bit addresses
-    /** The css style to use for the item */
-    private String mStyle = "";
+	/** The type of the stack traces: java or native */
+	private int mType;
+	/** Method/function name, if known (for native stack it might be unknown) */
+	private String mMethod;
+	/** Address offset from beginning of method, for native stack traces */
+	private int mMethodOffset;
+	/** The name of the file, if known */
+	private String mFileName;
+	/** The line number inside the file, if known */
+	private int mLine;
+	/** For native stack traces, the pc address */
+	private String mPC; // long, because soon we could have 64bit addresses
+	/** The css style to use for the item */
+	private String mStyle = "";
 
-    /**
-     * Create a java stack trace item
-     * @param method The method name
-     * @param fileName The file name
-     * @param line The line number
-     */
-    public StackTraceItem(String method, String fileName, int line) {
-        mType = TYPE_JAVA;
-        mMethod = (method == null) ? null : method.intern();
-        mMethodOffset = -1; // unknown
-        mFileName = (fileName == null) ? null : fileName.intern();
-        mLine = line;
-        mPC = -1; // unknown;
-    }
+	/**
+	 * Create a java stack trace item
+	 * 
+	 * @param method
+	 *            The method name
+	 * @param fileName
+	 *            The file name
+	 * @param line
+	 *            The line number
+	 */
+	public StackTraceItem(String method, String fileName, int line) {
+		mType = TYPE_JAVA;
+		mMethod = (method == null) ? null : method.intern();
+		mMethodOffset = -1; // unknown
+		mFileName = (fileName == null) ? null : fileName.intern();
+		mLine = line;
+		mPC = "00000000"; // unknown;
+	}
 
-    /**
-     * Create a native stack trace item
-     * @param method The method name
-     * @param fileName The file name
-     * @param line The line number
-     */
-    public StackTraceItem(long pc, String fileName, String method, int methodOffset) {
-        mType = TYPE_NATIVE;
-        mMethod = (method == null) ? null : method.intern();
-        mMethodOffset = methodOffset;
-        mFileName = (fileName == null) ? null : fileName.intern();
-        mLine = -1; // unknown
-        mPC = pc;
-    }
+	/**
+	 * Create a native stack trace item
+	 * 
+	 * @param method
+	 *            The method name
+	 * @param fileName
+	 *            The file name
+	 * @param line
+	 *            The line number
+	 */
+	public StackTraceItem(String pc, String fileName, String method, int methodOffset) {
+		mType = TYPE_NATIVE;
+		mMethod = (method == null) ? null : method.intern();
+		mMethodOffset = methodOffset;
+		mFileName = (fileName == null) ? null : fileName.intern();
+		mLine = -1; // unknown
+		mPC = pc;
+	}
 
-    public int getType() {
-        return mType;
-    }
+	/**
+	 * Create a native stack trace item
+	 * 
+	 * @param method
+	 *            The method name
+	 * @param fileName
+	 *            The file name
+	 */
+	public StackTraceItem(String pc, String fileName) {
+		mType = TYPE_NATIVE;
+		mMethod = null;
+		mMethodOffset = -1;// unknown
+		mFileName = (fileName == null) ? null : fileName.intern();
+		mLine = -1; // unknown
+		mPC = pc;
+	}
 
-    public String getStyle() {
-        return mStyle;
-    }
+	public int getType() {
+		return mType;
+	}
 
-    public void setStyle(String style) {
-        mStyle = style;
-    }
+	public String getStyle() {
+		return mStyle;
+	}
 
-    public String getMethod() {
-        return mMethod;
-    }
+	public void setStyle(String style) {
+		mStyle = style;
+	}
 
-    public int getMethodOffset() {
-        return mMethodOffset;
-    }
+	public String getMethod() {
+		return mMethod;
+	}
 
-    public long getPC() {
-        return mPC;
-    }
+	public int getMethodOffset() {
+		return mMethodOffset;
+	}
 
-    public String getFileName() {
-        return mFileName;
-    }
+	public String getPC() {
+		return mPC;
+	}
 
-    public int getLine() {
-        return mLine;
-    }
+	public String getFileName() {
+		return mFileName;
+	}
+
+	public int getLine() {
+		return mLine;
+	}
 
 }

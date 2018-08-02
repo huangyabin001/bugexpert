@@ -3,7 +3,6 @@ package com.bill.bugexpert.plugins.stacktrace;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import com.bill.bugexpert.BugExpertModule;
 import com.bill.bugexpert.Section;
@@ -14,8 +13,8 @@ import com.bill.bugexpert.util.RegExpUtil;
  */
 /* package */ final class StackTraceScanner {
 
-	private static final int STATE_INIT = 0;
-	private static final int STATE_PROC = 1;
+	private static final int STATE_PROC = 0;
+	private static final int STATE_THREAD = 1;
 	private static final int STATE_STACK = 2;
 
 	public StackTraceScanner(StackTracePlugin stackTracePlugin) {
@@ -23,112 +22,173 @@ import com.bill.bugexpert.util.RegExpUtil;
 
 	public Processes scan(BugExpertModule br, int id, Section sec, String chapterName) {
 		br.logI("StackTraceScanner:scan(), scanning...");
-		Pattern pNat = Pattern.compile("  #..  pc (........)  ([^() ]+)(?: \\((.*)\\+(.*)\\))?");
-		Pattern pNatAlt = Pattern.compile("  #..  pc (........)  ([^() ]+) \\(deleted\\)");
 		int cnt = sec.getLineCount();
-		int state = STATE_INIT;
+		int state = STATE_PROC;
 		Processes processes = new Processes(br, id, chapterName, sec.getName());
 		Process curProc = null;
 		StackTrace curStackTrace = null;
-
 		for (int i = 0; i < cnt; i++) {
 			String buff = sec.getLine(i);
+			Matcher m0 = RegExpUtil.getMatch(RegExpUtil.VM_TRACES_THREAD_STACKS0, buff);// #
+			Matcher m1 = RegExpUtil.getMatch(RegExpUtil.VM_TRACES_THREAD_STACKS1, buff);// |
+			Matcher m2 = RegExpUtil.getMatch(RegExpUtil.VM_TRACES_THREAD_STACKS2, buff);// native
+			Matcher m2_1 = RegExpUtil.getMatch(RegExpUtil.VM_TRACES_THREAD_STACKS2_1, buff);// native
+			Matcher m3 = RegExpUtil.getMatch(RegExpUtil.VM_TRACES_THREAD_STACKS3, buff);// at
+			Matcher m3_1 = RegExpUtil.getMatch(RegExpUtil.VM_TRACES_THREAD_STACKS3_1, buff);// at
+			Matcher m4 = RegExpUtil.getMatch(RegExpUtil.VM_TRACES_THREAD_STACKS4, buff);// (
+			Matcher m5 = RegExpUtil.getMatch(RegExpUtil.VM_TRACES_THREAD_STACKS5, buff);// -
 			switch (state) {
-			case STATE_INIT:
+			case STATE_PROC:
 				Matcher mInit = RegExpUtil.getMatch(RegExpUtil.VM_TRACES_PID, buff);
 				if (mInit != null) {
-					state = STATE_PROC;
+					state = STATE_THREAD;
 					int pid = Integer.parseInt(mInit.group(1));
 					String data = mInit.group(2);
 					String time = mInit.group(3);
 					curProc = new Process(br, processes, pid, data, time);
+					// br.logI("pid = " + pid + ", data = " + data + ", time = " + time + ".");
 					processes.add(curProc);
 				}
 				break;
-			case STATE_PROC:
+			case STATE_THREAD:
+				// "Cmd line: android.process.media"
 				Matcher cmdM = RegExpUtil.getMatch(RegExpUtil.VM_TRACES_PID_CMDLINE, buff);
-				Matcher threadM = RegExpUtil.getMatch(RegExpUtil.VM_TRACES_THREAD, buff);
-				Matcher threadMN = RegExpUtil.getMatch(RegExpUtil.VM_TRACES_THREAD_NATIVE, buff);
-				if (RegExpUtil.isMatch(RegExpUtil.VM_TRACES_PID_END, buff)) {
+				// "\"main\" prio=5 tid=1 Native"
+				Matcher threadM = RegExpUtil.getMatch(RegExpUtil.VM_TRACES_THREAD2, buff);
+				// "\"main\" daemon prio=5 tid=1 NATIVE"
+				Matcher threadM_ = RegExpUtil.getMatch(RegExpUtil.VM_TRACES_THREAD, buff);
+				// "\"provider@2.4-se\" sysTid=344"
+				Matcher threadM1 = RegExpUtil.getMatch(RegExpUtil.VM_TRACES_THREAD1, buff);
+				// "\"RenderThread\" prio=5 (not attached)
+				Matcher threadM3 = RegExpUtil.getMatch(RegExpUtil.VM_TRACES_THREAD3, buff);
+				// e.g "----- end 329 -----"
+				Matcher endM = RegExpUtil.getMatch(RegExpUtil.VM_TRACES_PID_END, buff);
+
+				if (endM != null) {
 					curProc = null;
-					state = STATE_INIT;
+					state = STATE_PROC;
 				} else if (cmdM != null) {
 					curProc.setName(cmdM.group(1));
-				} else if (threadM != null || threadMN != null) {
-					// "Binder:329_4" prio=5 tid=15 Native
+					// br.logI("STATE_PROC::cmdline = " + cmdM.group(1) + ".");
+				} else if (threadM != null || threadM1 != null || threadM3 != null) {
 					state = STATE_STACK;
+					String separator = "---";
 					if (threadM != null) {
-						String threadName = threadM.group(1);
-						int prio = Integer.parseInt(threadM.group(2));
-						int tid = Integer.parseInt(threadM.group(3));
-						String threadState = threadM.group(4);
+						if (threadM_ != null) {
+							// "\"main\" daemon prio=5 tid=1 NATIVE"
+							String threadName = separator + threadM_.group(1);
+							int prio = Integer.parseInt(threadM_.group(3));
+							int tid = Integer.parseInt(threadM_.group(4));
+							String threadState = threadM_.group(5);
 
-						curStackTrace = new StackTrace(curProc, threadName, tid, prio, threadState);
-						br.logI(curStackTrace.toString());
-						curProc.addStackTrace(curStackTrace);
-					} else if (threadMN != null) {
-						// "bluetooth@1.0-s" sysTid=343
-						String threadName = threadMN.group(1);
-						String sysTid = threadMN.group(2);
-						curStackTrace = new StackTrace(curProc, threadName, -1, -1, "?");
-						curProc.addStackTrace(curStackTrace);
-						if (sysTid != null) {
-							curStackTrace.parseProperties(sysTid);
+							curStackTrace = new StackTrace(curProc, threadName, tid, prio, threadState);
+							curProc.addStackTrace(curStackTrace);
+						} else {
+							// "\"main\" prio=5 tid=1 Native"
+							String threadName2 = separator + threadM.group(1);
+							int prio2 = Integer.parseInt(threadM.group(2));
+							int tid2 = Integer.parseInt(threadM.group(3));
+							String threadState2 = threadM.group(4);
+
+							curStackTrace = new StackTrace(curProc, threadName2, tid2, prio2, threadState2);
+							curProc.addStackTrace(curStackTrace);
 						}
+					} else if (threadM1 != null) {
+						// "bluetooth@1.0-s" sysTid=343
+						String threadName1 = separator + threadM1.group(1);
+						String sysTid1 = threadM1.group(2);
+						curStackTrace = new StackTrace(curProc, threadName1, -1, -1, "?");
+						curProc.addStackTrace(curStackTrace);
+						if (sysTid1 != null) {
+							curStackTrace.parseProperties(sysTid1);
+						}
+					} else if (threadM3 != null) {
+						// "\"RenderThread\" prio=5 (not attached)
+						String threadName3 = separator + threadM3.group(1);
+						int prio3 = Integer.parseInt(threadM3.group(2));
+						String threadState3 = threadM3.group(3);
+
+						curStackTrace = new StackTrace(curProc, threadName3, prio3, -1, threadState3);
+						curProc.addStackTrace(curStackTrace);
 					}
 				}
 				break;
 			case STATE_STACK:
-				if (!buff.startsWith("  ")) {
-					state = STATE_PROC;
-					curStackTrace = null;
-				} else if (buff.startsWith("  | ")) {
+				if (m0 != null) {// #
+					try {
+						String pc = m0.group(1);
+						String fileName = m0.group(2);
+						String method = m0.group(3);
+						int methodOffset = Integer.parseInt(m0.group(4));
+						StackTraceItem item = new StackTraceItem(pc, fileName, method, methodOffset);
+						curStackTrace.addStackTraceItem(item);
+					} catch (Exception e) {
+						br.logE("StackTraceScanner[#]::scan; parse [" + buff + "] error!s");
+						e.printStackTrace();
+					}
+				} else if (m1 != null) {// |
 					// Parse the extra properties
-					curStackTrace.parseProperties(buff.substring(4));
-				} else if (buff.startsWith("  - ")) {
-					buff = buff.substring(4);
+					curStackTrace.parseProperties(buff);
+					// br.logI("m1_buff = " + buff);
+				} else if (m2 != null | m2_1 != null) {// native
+					br.logI("m2_buff = " + buff);
+					try {
+						String pc = "unknown";
+						String method = "unknown";
+						String fileName = "unknown";
+						int methodOffset = 0;
+						if (m2 != null) {
+							pc = m2.group(1);
+							fileName = m2.group(2);
+							method = m2.group(3);
+							methodOffset = Integer.parseInt(m2.group(4));
+							StackTraceItem item = new StackTraceItem(pc, fileName, method, methodOffset);
+							curStackTrace.addStackTraceItem(item);
+						} else if (m2_1 != null) {
+							pc = m2_1.group(1);
+							fileName = m2_1.group(2);
+							StackTraceItem item = new StackTraceItem(pc, fileName);
+							curStackTrace.addStackTraceItem(item);
+						} else {
+							br.logE("StackTraceScanner[native]::scan; parse [" + buff + "] error!s");
+						}
+					} catch (Exception e) {
+						br.logE("StackTraceScanner[native]::scan; parse [" + buff + "] error!s");
+						e.printStackTrace();
+					}
+				} else if (m3 != null || m3_1 != null) {// at
+					String method = "unknown";
+					String fileName = "unknown";
+					int line = 0;
+
+					try {
+						if (m3 != null) {
+							fileName = m3.group(1);
+							method = m3.group(2);
+							line = Integer.parseInt(m3.group(3));
+							StackTraceItem item = new StackTraceItem(method, fileName, line);
+							curStackTrace.addStackTraceItem(item);
+						} else if (m3_1 != null) {
+							fileName = m3_1.group(1);
+							method = m3_1.group(2);
+							StackTraceItem item = new StackTraceItem(method, fileName, line);
+							curStackTrace.addStackTraceItem(item);
+						} else {
+							br.logE("StackTraceScanner[at]::scan; parse [" + buff + "] error!s");
+						}
+					} catch (Exception e) {
+						br.logE("StackTraceScanner[at]::scan; parse [" + buff + "] error!s");
+						e.printStackTrace();
+					}
+				} else if (m4 != null) {// ()
+					// do nothing.
+				} else if (m5 != null) {// -
 					StackTraceItem item = new StackTraceItem("", buff, 0);
 					curStackTrace.addStackTraceItem(item);
-					if (buff.startsWith("waiting ")) {
-						processWaitingToLockLine(curStackTrace, buff);
-					}
-				} else if (buff.startsWith("  at ")) {
-					int idx0 = buff.indexOf('(');
-					int idx1 = buff.indexOf(':');
-					int idx2 = buff.indexOf(')');
-					if (idx0 >= 0 && idx2 >= 0 && idx2 > idx0) {
-						String method = buff.substring(5, idx0);
-						String fileName = null;
-						int line = -1;
-						if (idx1 >= 0 && idx1 > idx0 && idx2 > idx1) {
-							fileName = buff.substring(idx0 + 1, idx1);
-							String lineS = buff.substring(idx1 + 1, idx2);
-							if (lineS.startsWith("~")) {
-								lineS = lineS.substring(1);
-							} else if (lineS.lastIndexOf(':') > 0) {
-								int position = lineS.lastIndexOf(':');
-								lineS = lineS.substring(position + 1);
-							}
-							line = Integer.parseInt(lineS);
-						}
-						StackTraceItem item = new StackTraceItem(method, fileName, line);
-						curStackTrace.addStackTraceItem(item);
-					}
-				} else if (buff.startsWith("  #")) {
-					Matcher m = pNat.matcher(buff);
-					if (!m.matches()) {
-						m = pNatAlt.matcher(buff);
-					}
-					if (!m.matches()) {
-						br.logE("Cannot parse line: " + buff);
-						continue;
-					}
-					long pc = Long.parseLong(m.group(1), 16);
-					String fileName = m.group(2);
-					String method = (m.groupCount() >= 3) ? m.group(3) : null;
-					int methodOffset = (method == null) ? -1 : Integer.parseInt(m.group(4));
-					StackTraceItem item = new StackTraceItem(pc, fileName, method, methodOffset);
-					curStackTrace.addStackTraceItem(item);
+					processWaitingToLockLine(curStackTrace, buff);
+				} else {
+					state = STATE_THREAD;
+					curStackTrace = null;
 				}
 			}
 

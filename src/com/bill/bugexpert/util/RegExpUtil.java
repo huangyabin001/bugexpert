@@ -45,11 +45,35 @@ public class RegExpUtil {
 	public static final String VM_TRACES_PID_CMDLINE = "Cmd\\s+line:\\s+(\\S*)";
 
 	// e.g "\"main\" daemon prio=5 tid=1 NATIVE"
-	public static final String VM_TRACES_THREAD = "\"(\\S*)\"\\s+\\S*\\s+{0,1}prio=(\\d+)\\s+tid=(\\d+)\\s(\\S*)";
+	public static final String VM_TRACES_THREAD = "([\\s\\S]*)\\s+(daemon)\\s+prio=(\\d+)\\s+tid=(\\d+)\\s([\\s\\S]*)";
 
 	// e.g "\"provider@2.4-se\" sysTid=344"
-	public static final String VM_TRACES_THREAD_NATIVE = "\"(\\S*)\"\\s+sysTid=(\\d+)";
-	
+	public static final String VM_TRACES_THREAD1 = "([\\s\\S]*)\\s+sysTid=(\\d+)";
+
+	// "\"main\" prio=5 tid=1 Native"
+	public static final String VM_TRACES_THREAD2 = "([\\s\\S]*)\\s+prio=(\\d+)\\s+tid=(\\d+)\\s+([\\s\\S]*)";
+
+	// "\"RenderThread\" prio=5 (not attached)
+	public static final String VM_TRACES_THREAD3 = "([\\s\\S]*)\\s+prio=(\\d+)\\s+\\(([\\s\\S]*)\\)";
+
+	// e.g " #00 pc 00049794 /system/lib/libc.so (__ioctl+8)"
+	// e.g " | held mutexes="
+	// e.g " native: #00 pc 00049794 /system/lib/libc.so (__ioctl+8)"
+	// e.g " native: #05 pc 00057a75  /system/lib/libbinder.so (???)";
+	// e.g " at android.os.MessageQueue.nativePollOnce(Native method)"
+	// e.g " at android.os.MessageQueue.next(MessageQueue.java:325)";
+	// e.g " (no managed stack frames)"
+	// e.g " - waiting on <0x015b1adc> (a
+	// java.lang.Class<java.lang.ref.ReferenceQueue>)";
+	public static final String VM_TRACES_THREAD_STACKS0 = "\\s{2}#\\d+\\s+pc\\s+([0-9a-z]{8})\\s+(\\S+)\\s+\\((\\S+)\\+(\\d+)\\)";
+	public static final String VM_TRACES_THREAD_STACKS1 = "\\s{2}\\|([\\s\\S]*)";
+	public static final String VM_TRACES_THREAD_STACKS2 = "\\s{2}native:\\s+#\\d+\\s+pc\\s+([0-9a-z]{8})\\s+([\\s\\S]*)\\s+\\(([\\s\\S]*)\\+(\\d+)\\)";
+	public static final String VM_TRACES_THREAD_STACKS2_1 = "\\s{2}native:\\s+#\\d+\\s+pc\\s+([0-9a-z]{8})\\s+([\\s\\S]*)\\s+\\(\\?\\?\\?\\)";
+	public static final String VM_TRACES_THREAD_STACKS3 = "\\s{2}at\\s+(\\S+)\\((\\S+):(\\d+)\\)";
+	public static final String VM_TRACES_THREAD_STACKS3_1 = "\\s{2}at\\s+(\\S+)\\((Native\\s+method)\\)";
+	public static final String VM_TRACES_THREAD_STACKS4 = "\\s{2}\\(no\\s+managed\\s+stack\\s+frames\\)";
+	public static final String VM_TRACES_THREAD_STACKS5 = "\\s{2}-\\s+waiting\\s+on(\\S*\\s*)*";
+
 	public static boolean isMatch(String pattern, String str) {
 		// e.g
 		// String s = "== dumpstate: 2018-01-30 08:35:52";

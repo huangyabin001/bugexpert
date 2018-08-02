@@ -186,7 +186,12 @@ public final class StackTracePlugin extends Plugin {
 		// Generate the output
 		for (Processes processes : mProcesses.values()) {
 			Generator gen = new Generator(this);
-			gen.generate(br, processes);
+			try {
+				gen.generate(br, processes);
+			} catch (Exception e) {
+				mMod.logE("StackTracePlugin:generate() " + processes.toString() + "error !");
+				e.printStackTrace();
+			}
 		}
 		if (mSlowChapters != null) {
 			mSlowChapters.sort(new Comparator<Chapter>() {

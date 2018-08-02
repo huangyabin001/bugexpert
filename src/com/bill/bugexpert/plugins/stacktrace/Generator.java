@@ -138,7 +138,9 @@ import com.bill.bugexpert.util.Util;
                             .add(item.getMethod());
                     } else {
                         stItem.addStyle("stacktrace-item-native");
-                        String method = String.format("0x%08x ", item.getPC());
+                        System.err.println("PC is "+ item.getPC());
+                        //String method = String.format("0x%08x ", item.getPC());
+                        String method = item.getPC();
                         if (item.getMethod() != null) {
                             method += item.getMethod();
                             if (item.getMethodOffset() >= 0) {
